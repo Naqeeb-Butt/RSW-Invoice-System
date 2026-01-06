@@ -28,13 +28,6 @@ export default function InvoiceForm() {
     { description: '', quantity: 1, unit: 'EA', unit_price: 0, tax_rate: 0 }
   ]);
 
-  useEffect(() => {
-    fetchClients();
-    if (isEditing) {
-      fetchInvoice();
-    }
-  }, [isEditing, id, fetchInvoice]);
-
   const fetchClients = async () => {
     try {
       const response = await axios.get('/api/v1/clients');
@@ -62,6 +55,13 @@ export default function InvoiceForm() {
       console.error('Failed to fetch invoice:', error);
     }
   }, [id]);
+
+  useEffect(() => {
+    fetchClients();
+    if (isEditing) {
+      fetchInvoice();
+    }
+  }, [isEditing, id, fetchInvoice]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
