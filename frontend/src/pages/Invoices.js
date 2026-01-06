@@ -5,6 +5,7 @@ import {
   Plus,
   Search,
   Download,
+  Upload,
   Eye,
   Edit,
   Trash2
