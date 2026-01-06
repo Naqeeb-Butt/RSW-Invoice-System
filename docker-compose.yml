@@ -1,0 +1,38 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "2205:2205"
+    environment:
+      - DATABASE_URL=sqlite:///./invoice_system.db
+      - SECRET_KEY=your-super-secret-key-change-in-production-12345
+      - ADMIN_EMAIL=admin@aasko.com
+      - ADMIN_PASSWORD=admin123
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+    networks:
+      - aasko_network
+    container_name: invoicesystem-backend
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "2004:2004"
+    environment:
+      - REACT_APP_API_URL=http://localhost:2205
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - aasko_network
+    container_name: invoicesystem-frontend
+
+volumes:
+  backend_data:
+
+networks:
+  aasko_network:
+    driver: bridge
