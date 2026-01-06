@@ -19,7 +19,6 @@
 
 [functions]
   directory = "netlify/functions"
-  node_modules_includes = ["node_modules"]
 
 [[headers]]
   for = "/*"
