@@ -8,8 +8,7 @@ import {
   AlertTriangle,
   TrendingUp,
   Plus,
-  Download,
-  Upload
+  Download
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 

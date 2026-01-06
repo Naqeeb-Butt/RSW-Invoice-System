@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Save,
   Plus,
   Trash2,
-  ArrowLeft,
-  Calculator
+  ArrowLeft
 } from 'lucide-react';
 
 export default function InvoiceForm() {
@@ -34,7 +33,7 @@ export default function InvoiceForm() {
     if (isEditing) {
       fetchInvoice();
     }
-  }, [isEditing, id]);
+  }, [isEditing, id, fetchInvoice]);
 
   const fetchClients = async () => {
     try {
@@ -45,32 +44,24 @@ export default function InvoiceForm() {
     }
   };
 
-  const fetchInvoice = async () => {
+  const fetchInvoice = useCallback(async () => {
     try {
       const response = await axios.get(`/api/v1/invoices/${id}`);
       const invoice = response.data;
       
       setFormData({
-        invoice_number: invoice.invoice_number,
-        po_number: invoice.po_number || '',
-        invoice_date: invoice.invoice_date.split('T')[0],
-        due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
-        status: invoice.status,
-        notes: invoice.notes || '',
-        client_id: invoice.client_id
+        client_id: invoice.client_id || '',
+        invoice_number: invoice.invoice_number || '',
+        invoice_date: invoice.invoice_date || new Date().toISOString().split('T')[0],
+        due_date: invoice.due_date || new Date().toISOString().split('T')[0],
+        status: invoice.status || 'draft',
+        items: invoice.items || [{ description: '', quantity: 1, unit: 'EA', unit_price: 0, tax_rate: 0 }],
+        notes: invoice.notes || ''
       });
-      
-      setItems(invoice.items.map(item => ({
-        description: item.description,
-        quantity: item.quantity,
-        unit: item.unit,
-        unit_price: item.unit_price,
-        tax_rate: item.tax_rate
-      })));
     } catch (error) {
       console.error('Failed to fetch invoice:', error);
     }
-  };
+  }, [id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

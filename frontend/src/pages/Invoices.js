@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import {
   Plus,
   Search,
-  Filter,
   Download,
-  Upload,
   Eye,
   Edit,
-  Trash2,
-  Calendar
+  Trash2
 } from 'lucide-react';
 
 export default function Invoices() {
@@ -20,11 +17,7 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
 
-  useEffect(() => {
-    fetchInvoices();
-  }, [statusFilter]);
-
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     try {
       const params = {};
       if (statusFilter) params.status = statusFilter;
@@ -36,7 +29,11 @@ export default function Invoices() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
 
   const handleExport = async () => {
     try {

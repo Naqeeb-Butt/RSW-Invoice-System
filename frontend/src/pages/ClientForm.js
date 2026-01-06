@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
   Save,
   ArrowLeft,
-  Building,
-  Phone,
-  Mail,
-  MapPin
+  Building
 } from 'lucide-react';
 
 export default function ClientForm() {
@@ -26,13 +23,7 @@ export default function ClientForm() {
     vendor_code: ''
   });
 
-  useEffect(() => {
-    if (isEditing) {
-      fetchClient();
-    }
-  }, [isEditing, id]);
-
-  const fetchClient = async () => {
+  const fetchClient = useCallback(async () => {
     try {
       const response = await axios.get(`/api/v1/clients/${id}`);
       const client = response.data;
@@ -49,7 +40,13 @@ export default function ClientForm() {
     } catch (error) {
       console.error('Failed to fetch client:', error);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (isEditing && id) {
+      fetchClient();
+    }
+  }, [isEditing, id, fetchClient]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

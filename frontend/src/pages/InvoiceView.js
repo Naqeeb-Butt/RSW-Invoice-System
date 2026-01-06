@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   ArrowLeft,
   Edit,
-  Download,
   Printer,
-  Mail,
-  FileText
+  Mail
 } from 'lucide-react';
 
 export default function InvoiceView() {
@@ -16,11 +14,7 @@ export default function InvoiceView() {
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchInvoice();
-  }, [id]);
-
-  const fetchInvoice = async () => {
+  const fetchInvoice = useCallback(async () => {
     try {
       const response = await axios.get(`/api/v1/invoices/${id}`);
       setInvoice(response.data);
@@ -29,7 +23,11 @@ export default function InvoiceView() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchInvoice();
+  }, [fetchInvoice]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
