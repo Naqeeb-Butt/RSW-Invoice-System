@@ -1,21 +1,15 @@
 [build]
   base = "frontend/"
-  command = "NODE_OPTIONS='--max-old-space-size=4096' npm run build"
+  command = "node build-netlify.js"
   publish = "build"
 
 [build.environment]
   NODE_VERSION = "18"
-  REACT_APP_API_URL = "/.netlify/functions"
-  DATABASE_URL = "sqlite:///./tmp/invoice_system.db"
-  SECRET_KEY = "aasko-invoice-system-netlify-production-key"
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
+  REACT_APP_API_URL = "https://rsw-invoice-system.onrender.com/api/v1"
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  to = "https://rsw-invoice-system.onrender.com/api/:splat"
   status = 200
 
 [[redirects]]
