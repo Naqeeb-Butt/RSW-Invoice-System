@@ -306,6 +306,11 @@ async def debug_list_users():
         print(f"Debug users endpoint failed: {str(e)}")
         return {"error": str(e)}
 
+
+@app.post(f"{settings.API_V1_STR}/logs")
+async def ingest_frontend_logs(payload: dict):
+    return {"status": "ok"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host=settings.HOST, port=settings.PORT)
