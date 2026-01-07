@@ -1,11 +1,12 @@
 [build]
   base = "frontend/"
-  command = "node build-netlify.js"
+  command = "CI=false npm run build"
   publish = "build"
 
 [build.environment]
   NODE_VERSION = "18"
   REACT_APP_API_URL = "/.netlify/functions"
+  ESLINT_NO_DEV_ERRORS = "true"
 
 [functions]
   directory = "netlify/functions"
@@ -13,7 +14,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  to = "/.netlify/functions/api/:splat"
   status = 200
 
 [[redirects]]

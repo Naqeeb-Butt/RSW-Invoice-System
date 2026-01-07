@@ -1,14 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Invoices from './pages/Invoices';
-import InvoiceForm from './pages/InvoiceForm';
-import InvoiceView from './pages/InvoiceView';
-import Clients from './pages/Clients';
-import ClientForm from './pages/ClientForm';
-import Debug from './pages/Debug';
+import Login from './pages/Login.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import Invoices from './pages/Invoices.jsx';
+import InvoiceForm from './pages/InvoiceForm.jsx';
+import InvoiceView from './pages/InvoiceView.jsx';
+import Clients from './pages/Clients.jsx';
+import ClientForm from './pages/ClientForm.jsx';
+import Debug from './pages/Debug.jsx';
 import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
 
