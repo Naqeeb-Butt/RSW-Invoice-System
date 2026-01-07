@@ -1,7 +1,3 @@
-const { createRequire } = require('module');
-const require = createRequire(import.meta.url);
-
-// Simple build script that doesn't rely on react-scripts
 const fs = require('fs');
 const path = require('path');
 
@@ -18,13 +14,14 @@ if (fs.existsSync(buildDir)) {
 // Create build directory
 fs.mkdirSync(buildDir, { recursive: true });
 
-// Copy static files
+// Copy static files if they exist
 const publicDir = path.join(__dirname, 'public');
-copyFolder(publicDir, buildDir);
+if (fs.existsSync(publicDir)) {
+  copyFolder(publicDir, buildDir);
+}
 
-// Create a simple index.html that redirects to the debug page
-const indexHtml = `
-<!DOCTYPE html>
+// Create a simple index.html
+const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -63,18 +60,16 @@ const indexHtml = `
         </div>
         
         <div style="text-align: center; margin-top: 30px;">
-            <a href="/debug" class="btn">🔍 Go to Debug Dashboard</a>
+            <a href="/debug.html" class="btn">🔍 Go to Debug Dashboard</a>
             <a href="https://render.com" target="_blank" class="btn">🚀 Deploy Backend on Render</a>
         </div>
     </div>
     
     <script>
-        // Check API configuration
-        const apiUrl = process.env.REACT_APP_API_URL || 'Not configured';
+        const apiUrl = 'https://rsw-invoice-system.onrender.com/api/v1';
         document.getElementById('api-config').textContent = apiUrl;
         
-        // Test API connection
-        fetch('/api/v1/debug/health')
+        fetch(apiUrl + '/debug/health')
             .then(response => response.json())
             .then(data => {
                 console.log('API Health Check:', data);
@@ -84,15 +79,12 @@ const indexHtml = `
             });
     </script>
 </body>
-</html>
-`;
+</html>`;
 
 fs.writeFileSync(path.join(buildDir, 'index.html'), indexHtml);
 
-// Copy debug page
-const debugPage = fs.readFileSync(path.join(__dirname, 'src', 'pages', 'Debug.js'), 'utf8');
-const debugHtml = `
-<!DOCTYPE html>
+// Create debug page
+const debugHtml = `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -101,6 +93,7 @@ const debugHtml = `
         body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
         .error { color: #ff6b6b; }
         .success { color: #51cf66; }
+        .info { color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -108,47 +101,34 @@ const debugHtml = `
     <div id="content">Loading debug information...</div>
     
     <script>
-        // Debug script content
-        ${debugPage}
+        const env = {
+            REACT_APP_API_URL: 'https://rsw-invoice-system.onrender.com/api/v1',
+            NODE_ENV: 'production'
+        };
         
-        // Try to run debug checks
-        try {
-            // Check environment
-            const env = {
-                REACT_APP_API_URL: process.env.REACT_APP_API_URL || 'Not configured',
-                NODE_ENV: process.env.NODE_ENV || 'unknown'
-            };
+        document.getElementById('content').innerHTML = 
+            '<h2>Environment Variables</h2>' +
+            '<p><strong>REACT_APP_API_URL:</strong> ' + env.REACT_APP_API_URL + '</p>' +
+            '<p><strong>NODE_ENV:</strong> ' + env.NODE_ENV + '</p>' +
+            '<h2>API Test</h2>' +
+            '<p>Testing API connection...</p>';
             
-            document.getElementById('content').innerHTML = 
-                '<h2>Environment Variables</h2>' +
-                '<p><strong>REACT_APP_API_URL:</strong> ' + env.REACT_APP_API_URL + '</p>' +
-                '<p><strong>NODE_ENV:</strong> ' + env.NODE_ENV + '</p>' +
-                '<h2>API Test</h2>' +
-                '<p>Testing API connection...</p>';
-                
-            // Test API
-            fetch(env.REACT_APP_API_URL + '/debug/health')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('content').innerHTML += 
-                        '<h3>API Response:</h3>' +
-                        '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-                })
-                .catch(error => {
-                    document.getElementById('content').innerHTML += 
-                        '<h3 class="error">API Error:</h3>' +
-                        '<pre>' + error.message + '</pre>';
-                });
-        } catch (e) {
-            document.getElementById('content').innerHTML = 
-                '<h2 class="error">Debug Error:</h2>' +
-                '<pre>' + e.message + '</pre>';
-        }
+        fetch(env.REACT_APP_API_URL + '/debug/health')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('content').innerHTML += 
+                    '<h3 class="success">API Response:</h3>' +
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            })
+            .catch(error => {
+                document.getElementById('content').innerHTML += 
+                    '<h3 class="error">API Error:</h3>' +
+                    '<pre>' + error.message + '</pre>';
+            });
     </script>
 </body>
-</html>
-`;
-        
+</html>`;
+
 fs.writeFileSync(path.join(buildDir, 'debug.html'), debugHtml);
 
 console.log('✅ Build completed successfully!');
