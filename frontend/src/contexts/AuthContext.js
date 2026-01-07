@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
   const fetchUser = useCallback(async () => {
     try {
       logger.debug('Fetching current user');
-      const response = await axios.get('/api/v1/auth/me');
+      const response = await axios.get('/api/v1/auth/me-simple');
       setUser(response.data);
       setError(null);
       logger.info('User fetched successfully', { userId: response.data.id, email: response.data.email });

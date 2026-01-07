@@ -240,6 +240,37 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)):
     logger.info(f"Current user requested: {current_user.email}")
     return current_user
 
+# Simple auth/me endpoint for Netlify database
+@app.get(f"{settings.API_V1_STR}/auth/me-simple")
+async def read_users_me_simple(token: str = None):
+    """Simple auth/me endpoint that works with Netlify database"""
+    try:
+        from database_netlify import netlify_db
+        
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
+            )
+        
+        # For simplicity, just return admin user for demo
+        user = netlify_db.get_user_by_email(settings.ADMIN_EMAIL)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+        
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Auth/me error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():
