@@ -66,7 +66,7 @@ const indexHtml = `<!DOCTYPE html>
     </div>
     
     <script>
-        const apiUrl = 'https://rsw-invoice-system.onrender.com/api/v1';
+        const apiUrl = '/.netlify/functions/api/v1';
         document.getElementById('api-config').textContent = apiUrl;
         
         fetch(apiUrl + '/debug/health')
