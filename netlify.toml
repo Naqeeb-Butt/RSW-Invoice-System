@@ -6,6 +6,8 @@
 [build.environment]
   NODE_VERSION = "18"
   REACT_APP_API_URL = "/.netlify/functions"
+  DATABASE_URL = "sqlite:///./tmp/invoice_system.db"
+  SECRET_KEY = "aasko-invoice-system-netlify-production-key"
 
 [functions]
   directory = "netlify/functions"

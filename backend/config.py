@@ -4,16 +4,26 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "sqlite:///./invoice_system.db"
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL", 
+        "sqlite:///./invoice_system.db"
+    )
     
     # API
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = "your-secret-key-here-change-in-production"
+    SECRET_KEY: str = os.getenv(
+        "SECRET_KEY", 
+        "your-secret-key-here-change-in-production"
+    )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 * 24 * 60  # 30 days
     
     # CORS
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:2004", "http://127.0.0.1:2004"]
+    BACKEND_CORS_ORIGINS: list = [
+        "http://localhost:2004", 
+        "http://127.0.0.1:2004",
+        "https://*.netlify.app"
+    ]
     
     # Server
     HOST: str = "0.0.0.0"

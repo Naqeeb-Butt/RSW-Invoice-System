@@ -27,7 +27,38 @@ logger = setup_logging()
 logger.info("Aasko Invoice System starting up...")
 
 # Create database tables
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created successfully")
+except Exception as e:
+    logger.error(f"Failed to create database tables: {str(e)}")
+
+# Initialize admin user
+try:
+    from database import SessionLocal
+    db = SessionLocal()
+    from models import User
+    from auth import get_password_hash
+    
+    # Check if admin user exists
+    admin_user = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+    if not admin_user:
+        logger.info(f"Creating admin user: {settings.ADMIN_EMAIL}")
+        admin_user = User(
+            email=settings.ADMIN_EMAIL,
+            name=settings.ADMIN_NAME,
+            hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
+            is_active=True
+        )
+        db.add(admin_user)
+        db.commit()
+        logger.info("Admin user created successfully")
+    else:
+        logger.info(f"Admin user already exists: {settings.ADMIN_EMAIL}")
+    
+    db.close()
+except Exception as e:
+    logger.error(f"Failed to initialize admin user: {str(e)}")
 
 app = FastAPI(
     title="Aasko Construction Invoice System", 
