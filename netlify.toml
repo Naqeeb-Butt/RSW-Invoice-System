@@ -1,12 +1,11 @@
 [build]
   base = "frontend/"
-  command = "CI=false npm run build"
+  command = "npx react-scripts build"
   publish = "build"
 
 [build.environment]
   NODE_VERSION = "18"
   REACT_APP_API_URL = "/.netlify/functions"
-  CI = "false"
 
 [functions]
   directory = "netlify/functions"
