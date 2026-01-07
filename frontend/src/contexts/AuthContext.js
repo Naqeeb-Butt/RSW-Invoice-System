@@ -42,53 +42,37 @@ export function AuthProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      logger.info('Login attempt started', { email, timestamp: new Date().toISOString() });
+      logger.info('Login attempt', { email });
       
       // Validate form inputs
       if (!email || !password) {
         const errorMsg = !email ? 'Email is required' : 'Password is required';
-        logger.error('Validation failed', { email: !!email, password: !!password, error: errorMsg });
         setError(errorMsg);
         setLoading(false);
         return { success: false, error: errorMsg };
       }
 
       if (!email.includes('@')) {
-        logger.error('Invalid email format', { email });
         setError('Please enter a valid email address');
         setLoading(false);
         return { success: false, error: 'Please enter a valid email address' };
       }
 
       if (password.length < 6) {
-        logger.error('Password too short', { passwordLength: password.length });
         setError('Password must be at least 6 characters');
         setLoading(false);
         return { success: false, error: 'Password must be at least 6 characters' };
       }
-      
-      logger.info('Making API call to login endpoint', { 
-        endpoint: '/api/v1/auth/login',
-        apiUrl: process.env.REACT_APP_API_URL || 'default',
-        timestamp: new Date().toISOString()
-      });
       
       const formData = new FormData();
       formData.append('username', email);
       formData.append('password', password);
       
       const response = await axios.post('/api/v1/auth/login', formData);
-      logger.info('Login API response received', { 
-        status: response.status,
-        hasToken: !!response.data?.access_token,
-        timestamp: new Date().toISOString()
-      });
-      
       const { access_token } = response.data;
       
       localStorage.setItem('token', access_token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-      logger.info('Token stored and headers set', { tokenLength: access_token?.length });
       
       const userData = await fetchUser();
       logger.logAuthEvent('LOGIN', true, email);
@@ -97,24 +81,12 @@ export function AuthProvider({ children }) {
       return { success: true, user: userData };
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 'Login failed';
-      const errorDetails = {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
-        timestamp: new Date().toISOString()
-      };
-      
-      logger.error('Login failed with detailed error', errorDetails);
       setError(errorMessage);
       logger.logAuthEvent('LOGIN', false, email, error);
       setLoading(false);
       return { 
         success: false, 
-        error: errorMessage,
-        details: errorDetails
+        error: errorMessage
       };
     }
   };

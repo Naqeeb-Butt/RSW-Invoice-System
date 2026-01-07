@@ -5,7 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  REACT_APP_API_URL = "/.netlify/functions"
+  REACT_APP_API_URL = "/api"
   ESLINT_NO_DEV_ERRORS = "true"
 
 [functions]
@@ -14,7 +14,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/api/:splat"
+  to = "https://invoice-system-backend.onrender.com/api/:splat"
   status = 200
 
 [[redirects]]

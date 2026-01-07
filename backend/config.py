@@ -5,14 +5,14 @@ from typing import Optional
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", 
+        "DATABASE_URL",
         "sqlite:///./invoice_system.db"
     )
     
     # API
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = os.getenv(
-        "SECRET_KEY", 
+        "SECRET_KEY",
         "your-secret-key-here-change-in-production"
     )
     ALGORITHM: str = "HS256"
@@ -20,9 +20,8 @@ class Settings(BaseSettings):
     
     # CORS
     BACKEND_CORS_ORIGINS: list = [
-        "http://localhost:2004", 
+        "http://localhost:2004",
         "http://127.0.0.1:2004",
-        "https://*.netlify.app"
     ]
     
     # Server
@@ -30,9 +29,9 @@ class Settings(BaseSettings):
     PORT: int = 2205
     
     # Admin User
-    ADMIN_EMAIL: str = "admin@aasko.com"
-    ADMIN_PASSWORD: str = "admin123"
-    ADMIN_NAME: str = "Admin User"
+    ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "admin@aasko.com")
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin123")
+    ADMIN_NAME: str = os.getenv("ADMIN_NAME", "Admin User")
     
     # Company Info
     COMPANY_NAME: str = "Aasko Construction"

@@ -213,6 +213,15 @@ export default function Login() {
               )}
             </button>
           </div>
+          
+          {/* Demo Credentials */}
+          <div className="text-center text-sm text-gray-600 bg-gray-50 p-4 rounded-md border border-gray-200">
+            <p className="font-medium text-gray-700 mb-2">Demo credentials:</p>
+            <div className="space-y-1">
+              <p><span className="font-medium">Email:</span> admin@aasko.com</p>
+              <p><span className="font-medium">Password:</span> admin123</p>
+            </div>
+          </div>
         </form>
       </div>
     </div>

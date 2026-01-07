@@ -129,10 +129,10 @@ class UserLogin(BaseModel):
 # Dashboard schemas
 class DashboardStats(BaseModel):
     total_invoices: int
-    total_revenue: float
+    total_amount: float
     paid_invoices: int
     pending_invoices: int
-    monthly_revenue: List[MonthlyRevenue]
+    overdue_invoices: int
     
 class MonthlyRevenue(BaseModel):
     month: str
