@@ -91,9 +91,35 @@ async def login_for_access_token(
     db: Session = Depends(get_db)
 ):
     try:
-        logger.info(f"Login attempt for user: {form_data.username}")
+        logger.info(f"Login attempt started", extra={
+            "username": form_data.username,
+            "timestamp": datetime.utcnow().isoformat(),
+            "user_agent": "netlify_function",
+            "environment": "production"
+        })
+        
+        # Check if database is accessible
+        try:
+            db.execute("SELECT 1")
+            logger.info("Database connection successful")
+        except Exception as db_error:
+            logger.error(f"Database connection failed: {str(db_error)}", extra={
+                "error_type": "database_error",
+                "error_details": str(db_error)
+            })
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database connection failed"
+            )
+        
         user = authenticate_user(db, form_data.username, form_data.password)
+        
         if not user:
+            logger.warning(f"Authentication failed for user: {form_data.username}", extra={
+                "username": form_data.username,
+                "reason": "invalid_credentials",
+                "timestamp": datetime.utcnow().isoformat()
+            })
             log_auth_event("LOGIN_FAILED", form_data.username, False, "Invalid credentials")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -106,19 +132,93 @@ async def login_for_access_token(
             data={"sub": user.email}, expires_delta=access_token_expires
         )
         
+        logger.info(f"User logged in successfully", extra={
+            "user_email": user.email,
+            "user_id": user.id,
+            "token_expires_minutes": settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
         log_auth_event("LOGIN_SUCCESS", user.email, True, f"Token expires in {settings.ACCESS_TOKEN_EXPIRE_MINUTES} minutes")
-        logger.info(f"User {user.email} logged in successfully")
         
         return {"access_token": access_token, "token_type": "bearer"}
         
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Login failed with unexpected error: {str(e)}", extra={
+            "error_type": "server_error",
+            "error_details": str(e),
+            "username": form_data.username,
+            "timestamp": datetime.utcnow().isoformat()
+        })
         log_error(e, "User login", user_email=form_data.username)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Login failed due to server error"
         )
+
+@app.get(f"{settings.API_V1_STR}/debug/health")
+async def debug_health_check(db: Session = Depends(get_db)):
+    """Debug endpoint to check system health"""
+    try:
+        # Check database
+        db.execute("SELECT 1")
+        
+        # Check if admin user exists
+        from models import User
+        admin_user = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+        
+        # Count users
+        user_count = db.query(User).count()
+        
+        return {
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "database": {
+                "status": "connected",
+                "user_count": user_count,
+                "admin_user_exists": admin_user is not None,
+                "admin_email": settings.ADMIN_EMAIL
+            },
+            "environment": {
+                "api_version": settings.API_V1_STR,
+                "token_expire_minutes": settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            }
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e),
+            "database": {
+                "status": "disconnected"
+            }
+        }
+
+@app.get(f"{settings.API_V1_STR}/debug/users")
+async def debug_list_users(db: Session = Depends(get_db)):
+    """Debug endpoint to list all users"""
+    try:
+        from models import User
+        users = db.query(User).all()
+        return {
+            "user_count": len(users),
+            "users": [
+                {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "is_active": user.is_active,
+                    "created_at": user.created_at.isoformat() if user.created_at else None
+                }
+                for user in users
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Debug users endpoint failed: {str(e)}")
+        return {"error": str(e)}
 
 @app.get(f"{settings.API_V1_STR}/auth/me", response_model=UserSchema)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):

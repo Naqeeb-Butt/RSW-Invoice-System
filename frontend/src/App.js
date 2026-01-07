@@ -8,6 +8,7 @@ import InvoiceForm from './pages/InvoiceForm';
 import InvoiceView from './pages/InvoiceView';
 import Clients from './pages/Clients';
 import ClientForm from './pages/ClientForm';
+import Debug from './pages/Debug';
 import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -25,6 +26,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/debug" element={<Debug />} />
       <Route path="/" element={
         <ProtectedRoute>
           <Layout />
