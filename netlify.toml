@@ -1,6 +1,6 @@
 [build]
   base = "frontend/"
-  command = "npx react-scripts build"
+  command = "npx --yes react-scripts build"
   publish = "build"
 
 [build.environment]
