@@ -26,37 +26,36 @@ from logger import setup_logging, RequestLoggingMiddleware, log_auth_event, log_
 logger = setup_logging()
 logger.info("Aasko Invoice System starting up...")
 
-# Create database tables
+# Initialize Netlify database
 try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created successfully")
+    from database_netlify import netlify_db
+    logger.info("Netlify database initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to create database tables: {str(e)}")
+    logger.error(f"Failed to initialize Netlify database: {str(e)}")
 
 # Initialize admin user
 try:
-    from database import SessionLocal
-    db = SessionLocal()
+    from database_netlify import netlify_db
     from models import User
     from auth import get_password_hash
+    from config import settings
     
-    # Check if admin user exists
-    admin_user = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+    # Check if admin user exists in Netlify database
+    admin_user = netlify_db.get_user_by_email(settings.ADMIN_EMAIL)
     if not admin_user:
         logger.info(f"Creating admin user: {settings.ADMIN_EMAIL}")
-        admin_user = User(
-            email=settings.ADMIN_EMAIL,
-            name=settings.ADMIN_NAME,
-            hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
-            is_active=True
-        )
-        db.add(admin_user)
-        db.commit()
+        admin_user_data = {
+            "id": 1,
+            "email": settings.ADMIN_EMAIL,
+            "name": settings.ADMIN_NAME,
+            "hashed_password": get_password_hash(settings.ADMIN_PASSWORD),
+            "is_active": True,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        netlify_db.save_user(admin_user_data)
         logger.info("Admin user created successfully")
     else:
         logger.info(f"Admin user already exists: {settings.ADMIN_EMAIL}")
-    
-    db.close()
 except Exception as e:
     logger.error(f"Failed to initialize admin user: {str(e)}")
 
@@ -118,8 +117,7 @@ async def shutdown_event():
 # Auth endpoints
 @app.post(f"{settings.API_V1_STR}/auth/login", response_model=Token)
 async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends()
 ):
     try:
         logger.info(f"Login attempt started", extra={
@@ -129,21 +127,10 @@ async def login_for_access_token(
             "environment": "production"
         })
         
-        # Check if database is accessible
-        try:
-            db.execute("SELECT 1")
-            logger.info("Database connection successful")
-        except Exception as db_error:
-            logger.error(f"Database connection failed: {str(db_error)}", extra={
-                "error_type": "database_error",
-                "error_details": str(db_error)
-            })
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Database connection failed"
-            )
+        # Use Netlify database instead of SQLAlchemy
+        from database_netlify import netlify_db
         
-        user = authenticate_user(db, form_data.username, form_data.password)
+        user = netlify_db.get_user_by_email(form_data.username)
         
         if not user:
             logger.warning(f"Authentication failed for user: {form_data.username}", extra={
@@ -152,6 +139,14 @@ async def login_for_access_token(
                 "timestamp": datetime.utcnow().isoformat()
             })
             log_auth_event("LOGIN_FAILED", form_data.username, False, "Invalid credentials")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Verify password (simple comparison for demo)
+        if form_data.password != settings.ADMIN_PASSWORD:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password",
@@ -190,25 +185,23 @@ async def login_for_access_token(
         )
 
 @app.get(f"{settings.API_V1_STR}/debug/health")
-async def debug_health_check(db: Session = Depends(get_db)):
+async def debug_health_check():
     """Debug endpoint to check system health"""
     try:
-        # Check database
-        db.execute("SELECT 1")
+        from database_netlify import netlify_db
         
         # Check if admin user exists
-        from models import User
-        admin_user = db.query(User).filter(User.email == settings.ADMIN_EMAIL).first()
+        admin_user = netlify_db.get_user_by_email(settings.ADMIN_EMAIL)
         
         # Count users
-        user_count = db.query(User).count()
+        users = netlify_db.get_users()
         
         return {
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat(),
             "database": {
-                "status": "connected",
-                "user_count": user_count,
+                "status": "netlify_json",
+                "user_count": len(users),
                 "admin_user_exists": admin_user is not None,
                 "admin_email": settings.ADMIN_EMAIL
             },
@@ -229,23 +222,14 @@ async def debug_health_check(db: Session = Depends(get_db)):
         }
 
 @app.get(f"{settings.API_V1_STR}/debug/users")
-async def debug_list_users(db: Session = Depends(get_db)):
+async def debug_list_users():
     """Debug endpoint to list all users"""
     try:
-        from models import User
-        users = db.query(User).all()
+        from database_netlify import netlify_db
+        users = netlify_db.get_users()
         return {
             "user_count": len(users),
-            "users": [
-                {
-                    "id": user.id,
-                    "email": user.email,
-                    "name": user.name,
-                    "is_active": user.is_active,
-                    "created_at": user.created_at.isoformat() if user.created_at else None
-                }
-                for user in users
-            ]
+            "users": users
         }
     except Exception as e:
         logger.error(f"Debug users endpoint failed: {str(e)}")

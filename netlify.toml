@@ -5,11 +5,15 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  REACT_APP_API_URL = "https://rsw-invoice-system.onrender.com/api/v1"
+  REACT_APP_API_URL = "/.netlify/functions"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
 
 [[redirects]]
   from = "/api/*"
-  to = "https://rsw-invoice-system.onrender.com/api/:splat"
+  to = "/.netlify/functions/:splat"
   status = 200
 
 [[redirects]]
